@@ -1,80 +1,139 @@
-// Hardware Candlestick Chart - Terminal Visualization
-const GREEN: &str = "\x1b[32m";
-const RED: &str = "\x1b[31m";  
+// Hardware Candlestick Chart - Simplified Stable Version
+use std::fs;
+use rand;
+
 const RESET: &str = "\x1b[0m";
-const CYAN: &str = "\x1b[36m";
+const BOLD: &str = "\x1b[1m";
+const GREEN: &str = "\x1b[32m";
+const RED: &str = "\x1b[31m";
+const GRAY: &str = "\x1b[90m";
+const YELLOW: &str = "\x1b[33m";
+
+fn get_cpu_load() -> f64 {
+    let content = match fs::read_to_string("/proc/loadavg") {
+        Ok(s) => s,
+        Err(_) => String::from("1"),
+    };
+    
+    let first_field = content.split_whitespace().next().unwrap_or("1").to_string();
+    first_field.parse::<f64>().unwrap_or(1.0)
+}
 
 fn main() {
-    // Get current CPU load as volatility score proxy
-    let load_str = std::fs::read_to_string("/proc/loadavg")
-        .unwrap_or_else(|_| "0.50".to_string());
-    let cpu_load: f64 = load_str.split_whitespace().next()
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0.5);
-    
-    // Current hour as another factor  
-    let current_hour = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap_or(std::time::Duration::ZERO)
-        .as_secs() as u32 % 24;
-    
-    // Calculate volatility score (simplified formula)
-    let volatility = cpu_load + ((current_hour as f64) / 24.0 * 0.3);
-    
-    // Determine direction
-    let is_up = volatility > 1.0;
-    let display_color = if is_up { GREEN } else { RED };
-    let direction_str = if is_up { "🟢 UP" } else { "🔴 DOWN" };
-    
-    println!("{}", CYAN);
+    println!("{}", RESET);
     println!("╔══════════════════════════════════════════════════╗");
-    println!("║         🕯️  Hardware Candlestick Chart             ║");
-    println!("║              Real-time Volatility Index            ║");
-    println!("╚══════════════════════════════════════════════════╝");
-    println!();
+    println!("║         🕯️  Hardware Candlestick Chart            ║");
+    println!("║       Real-time Volatility Index                  ║");
+    println!("╚══════════════════════════════════════════════════╝{}{}", RESET, RESET);
     
-    // Display metrics
-    println!("System Metrics:");
-    println!("  CPU Load:      {:.2} ({}%)", cpu_load, cpu_load * 100.0);
-    println!("  Hour of Day:   {:2}:00", current_hour);
-    println!();
+    let mut price: f64 = 50.0;
+    let mut prev_close: f64 = 48.0;
     
-    // Volatility calculation result
-    println!("Volatility Calculation:");
-    println!("  Formula: CPU(0.65) + HourFactor(0.35 * normalized)");
-    println!("  Score:         {:.4}", volatility);
-    let display_color = if is_up { GREEN } else { RED };
-    println!("  Direction:     {}{}{}", display_color, direction_str, RESET);
-    println!();
+    loop {
+        // Get system metrics
+        let cpu_load = get_cpu_load();
+        
+        // Simulate OHLC candle formation
+        let noise = ((rand::random::<u32>() % 7) as f64).powi(2) / 100.0;
+        let change = (cpu_load * 0.35) - noise;
+        
+        // Calculate new price level
+        let new_price = price.clamp(45.0, 80.0);
+        
+        // Form candlestick data
+        let open = prev_close;
+        let close = new_price;
+        let high = (open.max(close) + change.abs().min(2.0)).max(45.0);
+        let low = (open.min(close) - change.abs().min(2.0)).min(80.0);
+        
+        // Store for next iteration
+        prev_close = close;
+        price = new_price;
+        
+        // Draw chart frame with colors
+        draw_candlestick(&Candle { open, high, low, close });
+        
+        clear_screen();
+        
+        std::thread::sleep(std::time::Duration::from_millis(2500));
+    }
+}
+
+struct Candle {
+    open: f64,
+    high: f64,
+    low: f64,
+    close: f64,
+}
+
+fn draw_candlestick(candle: &Candle) {
+    println!("{}", GREEN);
+    println!("╔══════════════════════════════════════════════════╗");
     
-    // Candlestick chart visualization
-    println!("📊 Simplified Chart:");
-    println!("{:─<70}", "");
-    println!("Time →   30m     35m     40m     45m     50m     55m     60m");
-    println!("{}", "──────────────────────────────────────────────────────────────────────────────");
+    // Price range for Y-axis scaling
+    let min_price = candle.low.max(45.0);
+    let max_price = candle.high.min(80.0);
     
-    // Show bars representing volatility level
-    let bar_count = ((volatility - 0.3) as usize).min(8);
-    for i in 0..bar_count {
-        let pos = i % 2;
-        if pos == 0 {
-            print!("{} ", GREEN);
+    // Draw Y-axis with price labels
+    println!("║  {}┌───────────────────────────────────────────┐{} ║", GRAY, RESET);
+    println!("║  {:?}Y-Axis: ${:.1} - ${:.1}", GRAY, min_price, max_price);
+    
+    // Draw horizontal grid with candle body/wick
+    let price_range = (max_price - min_price).max(1.0);
+    let rows = 10;
+    let height_per_row = price_range / rows as f64;
+    
+    for row in 0..rows {
+        let y_level = min_price + height_per_row * row as f64;
+        
+        print!("║  {}│", GRAY);
+        
+        // Check if this row intersects with candle body or wicks
+        if y_level >= candle.low && y_level <= candle.high {
+            // Draw wick (thin vertical lines at top/bottom)
+            if y_level < candle.low || y_level > candle.high {
+                print!("│");
+            } else if (y_level >= candle.open && y_level <= candle.close) 
+                    || (y_level >= candle.close && y_level <= candle.open) {
+                // Draw candle body with color
+                let is_up = candle.close >= candle.open;
+                
+                // Simple body representation
+                print!("{}", if is_up { GREEN } else { RED });
+            }
+        }
+        
+        // Print price label on right side (every other row)
+        if row % 2 == 0 {
+            println!("{} ${:.1}", GRAY, y_level);
         } else {
-            print!("██");
+            println!("{}", GRAY);
         }
     }
-    println!("{}", RESET);
     
-    println!("{}", "──────────────────────────────────────────────────────────────────────────────");
+    // X-axis time intervals
+    println!("║  {}├────────────────────────────────────────────┤{}", GRAY, RESET);
+    for i in 0..6 {
+        print!("║  {}│", GRAY);
+        if i % 2 == 0 {
+            print!(" │");
+        } else {
+            println!("{}", GRAY);
+        }
+        
+        // Time labels at intervals
+        if i % 3 == 0 {
+            print!(" {}", 30 + i * 5);
+        }
+    }
     
-    // Current state indicator
-    let status = if volatility > 1.0 { "RISING" } else { "FALLING" };
-    println!("   {}→ {}", if is_up { GREEN } else { RED }, status);
+    println!("║  {:?}└───────────────────────────────────────────────{}", YELLOW, RESET);
     
-    // Test colors
-    println!();
-    println!("🎨 Terminal Color Test:");
-    println!("  Green: {}", GREEN);
-    println!("  Red:   {}", RED);  
-    println!("  Cyan:  {}", CYAN);
+    // Legend
+    println!("║  {}🟢 UP (Green) | 🔴 DOWN (Red)                  {}", GREEN, RESET);
+    println!("╚══════════════════════════════════════════════════╝");
+}
+
+fn clear_screen() {
+    print!("\x1b[2J\x1b[H"); // Clear screen and home cursor
 }

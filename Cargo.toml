@@ -5,6 +5,7 @@ edition = "2021"
 authors = ["Ismail <ismail@example.com>"]
 
 [dependencies]
+rand = "0.8"
 
 [profile.release]
 lto = true
