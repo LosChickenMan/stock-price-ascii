@@ -1,22 +1,12 @@
-# Hardware Candlestick Chart Configuration
-# ========================================
-# Use flat key-value TOML structure (not nested tables)
+# Starting value for the simulated hardware index.
+starting_price = 100.0
 
-sample_rate = 0.5          # Seconds between metric readings
+# Number of recent candles kept on screen/in memory.
+history_limit = 72
 
-duration_enabled = false    # Enable duration limit for demo mode
-duration_seconds = 30       # Duration in seconds (only if enabled above)
+# Hardware sampling interval in milliseconds.
+sample_interval_ms = 2500
 
-cpu_weight = 0.35          # CPU load weight (0.0-1.0)
-gpu_weight = 0.22          # GPU utilization weight  
-temp_weight = 0.18         # Temperature deviation weight
-traffic_weight = 0.17      # Network traffic weight
-time_weight = 0.12         # Hour-of-day factor weight
-
-gaussian_std = 0.08        # Gaussian noise standard deviation
-uniform_range = 0.06       # Uniform jitter range (± value)
-noise_weight = 0.12        # How much noise influences output
-
-display_width = 80         # Terminal width in characters
-display_height = 24        # Terminal height in characters  
-show_timestamp = true      # Show wall clock timestamp on screen
+# Simulated index boundaries.
+market_floor = 20.0
+market_ceiling = 250.0
