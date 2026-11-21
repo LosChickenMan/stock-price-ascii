@@ -1,109 +1,56 @@
-# 🕯️ Hardware Candlestick Terminal - Professional Edition
+# Hardware Candlestick
 
-A professional terminal application that visualizes your computer's hardware performance as a stock market simulation. Your system becomes the marketplace!
+A Rust terminal dashboard that turns live system telemetry into a simulated market index and renders it as a scrolling candlestick chart.
 
 ## Features
 
-### 📊 Candlestick Chart
-- Real-time OHLC (Open, High, Low, Close) candlesticks
-- Green bullish candles | Red bearish candles  
-- Wicks showing price volatility
-- Historical candle retention
-- Professional dark terminal theme
+- Live CPU and memory usage from `sysinfo`
+- Network receive/transmit throughput from byte-counter deltas
+- OHLC candles with wicks and bodies
+- Bounded historical candle buffer and dynamic chart scaling
+- Ratatui terminal UI with pause, reset, and sampling-speed controls
+- TOML configuration with sensible defaults
 
-### 🔧 Hardware Metrics Display
-- **CPU**: Utilization percentage and load average
-- **Memory**: Used/total with usage percentage
-- **Network**: Upload/download throughput
-- **Temperature**: CPU thermal readings (when available)
-- **GPU**: GPU utilization (when nvidia-smi is available)
+The market price is a visualization, not a financial quote. Hardware metrics influence the simulated price alongside noise and mean reversion.
 
-### 🎯 Market Simulation
-- Fictional stock price driven by hardware activity  
-- Configurable volatility and noise
-- Professional Bloomberg-style terminal interface
-- Dark theme with color-coded indicators
+## Run
 
-## Requirements
-
-- Linux system (primary target, Windows/macOS supported via sysinfo crate)
-- Rust toolchain (rustc 1.70+)
-- Terminal with ANSI color support
-- Modern terminal emulator (iTerm2, Alacritty, Kitty, xterm)
-
-## Quick Start
-
-### Installation
+Install a recent stable Rust toolchain, then:
 
 ```bash
-cd /mnt/ai/stock-price-ascii && cargo build --release
+cargo run --release
 ```
 
-### Running the Application
-
-**Terminal version (recommended):**
-
-```bash
-cd /mnt/ai/stock-price-ascii && cargo run --release
-```
-
-**Direct binary execution:**
-
-```bash
-cd /mnt/ai/stock-price-ascii && ./target/release/hardware-candlestick
-```
-
-### Configuration
-
-Edit `config/candlestick.toml` to customize:
-
-- Price range (min/max)
-- Candle history length
-- Weight for each hardware metric
-- Noise level and volatility settings
-- Update interval timing
-
-## Usage Controls
-
-When running the application, use keyboard controls:
+## Controls
 
 | Key | Action |
-|-----|--------|
-| `Q` | Quit application |
-| `P` | Pause/resume updates |
-| `R` | Reset simulation to initial price |
-| `+` | Increase update speed (faster refresh) |
-| `-` | Decrease update speed (slower refresh) |
+|---|---|
+| `q` / `Esc` | Quit |
+| `Space` / `p` | Pause or resume market candles |
+| `r` | Reset market history |
+| `+` / `=` | Sample faster |
+| `-` | Sample slower |
+| `1` | 1 second interval |
+| `2` | 2.5 second interval |
+| `3` | 5 second interval |
 
-## Project Structure
+## Configuration
 
+Edit `config/candlestick.toml`:
+
+```toml
+starting_price = 100.0
+history_limit = 72
+sample_interval_ms = 2500
+market_floor = 20.0
+market_ceiling = 250.0
 ```
-/mnt/ai/stock-price-ascii/
-├── src/
-│   ├── main.rs             # Application entry point
-│   ├── market/              # Market simulation engine
-│   └── hardware/            # Hardware metrics collection
-├── config/
-│   └── candlestick.toml     # Configuration file
-├── Cargo.toml               # Dependencies
-├── README.md                # This file
-└── target/release/          # Compiled binary
-```
 
-## Technology Stack
+The app looks for `config/candlestick.toml`, then `candlestick.toml` in the current working directory. Missing or invalid configuration falls back to defaults.
 
-- **Rust** - Systems programming language
-- **ratatui** - Terminal UI framework  
-- **crossterm** - Cross-platform terminal input/output
-- **chrono** - Time handling and UTC timestamps
-- **rand** - Random number generation for market noise
-- **anyhow** - Error handling
-- **serde/toml** - Configuration parsing
+## Notes
 
-## License
-
-MIT License - Feel free to use, modify, and distribute.
-
----
-
-**Enjoy watching your hardware performance visualized as a thriving stock market! 📈🎉**
+- CPU usage is sampled using `sysinfo`; it is not inferred from Linux load average.
+- Network rates are calculated from cumulative byte-counter differences.
+- Temperature, GPU, and per-disk metrics are intentionally not shown yet because support varies by operating system and hardware.
+- This is a terminal visualization only; it does not place trades or represent real market data.

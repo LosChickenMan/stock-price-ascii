@@ -1,25 +1,19 @@
 [package]
 name = "hardware-candlestick"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-authors = ["LosChickenMan <ismail@example.com>"]
-description = "Professional hardware performance terminal - Visualize system metrics as stock market candles"
-license = "MIT"
-repository = "https://github.com/LosChickenMan/stock-price-ascii"
-
-[dependencies]
-# Random number generation for price volatility
-rand = "0.8"
-
-# Error handling  
-anyhow = "1.0"
+description = "A live terminal candlestick dashboard powered by system hardware metrics"
 
 [[bin]]
 name = "hardware-candlestick"
 path = "src/main.rs"
 
-[profile.release]
-lto = true
-codegen-units = 1
-strip = true
-opt-level = 3
+[dependencies]
+anyhow = "1.0"
+chrono = { version = "0.4", features = ["clock"] }
+crossterm = "0.28"
+rand = "0.8"
+ratatui = "0.28"
+serde = { version = "1.0", features = ["derive"] }
+sysinfo = "0.30"
+toml = "0.8"

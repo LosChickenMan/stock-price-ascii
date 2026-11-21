@@ -1,0 +1,7 @@
+/mnt/ai/stock-price-ascii/target/release/deps/strsim-b0bd691c0b318082.d: /home/ismail/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/strsim-0.11.1/src/lib.rs
+
+/mnt/ai/stock-price-ascii/target/release/deps/libstrsim-b0bd691c0b318082.rlib: /home/ismail/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/strsim-0.11.1/src/lib.rs
+
+/mnt/ai/stock-price-ascii/target/release/deps/libstrsim-b0bd691c0b318082.rmeta: /home/ismail/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/strsim-0.11.1/src/lib.rs
+
+/home/ismail/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/strsim-0.11.1/src/lib.rs:

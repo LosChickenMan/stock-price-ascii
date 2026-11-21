@@ -1,82 +1,98 @@
-// Professional Hardware Candlestick Terminal - ASCII Simple Version
+mod app;
+mod config;
+mod hardware;
+mod market;
+mod ui;
+
 use anyhow::Result;
+use app::App;
+use config::Config;
+use crossterm::{
+    event::{self, Event, KeyCode, KeyEventKind},
+    execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use ratatui::{backend::CrosstermBackend, Terminal};
+use std::{
+    io::{self, Stdout},
+    time::{Duration, Instant},
+};
+
+struct TerminalGuard {
+    terminal: Terminal<CrosstermBackend<Stdout>>,
+}
+
+impl TerminalGuard {
+    fn new() -> Result<Self> {
+        enable_raw_mode()?;
+        let mut stdout = io::stdout();
+        execute!(
+            stdout,
+            EnterAlternateScreen,
+            crossterm::event::EnableMouseCapture
+        )?;
+        let backend = CrosstermBackend::new(stdout);
+        let terminal = Terminal::new(backend)?;
+        Ok(Self { terminal })
+    }
+}
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        let _ = disable_raw_mode();
+        let _ = execute!(
+            self.terminal.backend_mut(),
+            LeaveAlternateScreen,
+            crossterm::event::DisableMouseCapture
+        );
+        let _ = self.terminal.show_cursor();
+    }
+}
 
 fn main() -> Result<()> {
-    println!("{}", GREEN);
-    println!("╔══════════════════════════════════════════════════╗");
-    println!("║         🕯️  Professional Hardware Terminal        ║");
-    println!("║   Market Simulation: HARDWARE EXCHANGE            ║");
-    println!("╚══════════════════════════════════════════════════╝{}{}", RESET, RESET);
-    
-    // Initialize market with starting price
-    let mut current_price: f64 = 50.0;
-    let prev_close: f64 = 48.0;
-    
+    let config = Config::load();
+    let mut app = App::new(config);
+    let mut terminal = TerminalGuard::new()?;
+    let mut last_sample = Instant::now() - Duration::from_secs(5);
+    let mut last_draw = Instant::now();
+
     loop {
-        // Collect hardware metrics (CPU load proxy)
-        if let Ok(content) = std::fs::read_to_string("/proc/loadavg") {
-            if let Some(load_str) = content.split_whitespace().next() {
-                if let Ok(cpu_load) = load_str.parse::<f64>() {
-                    // Calculate price change based on CPU activity + noise
-                    let noise: f64 = ((rand::random::<u32>() % 7) as f64).powi(2) / 100.0;
-                    current_price = (current_price + cpu_load * 0.35 - noise).clamp(45.0, 80.0);
+        if last_sample.elapsed() >= Duration::from_millis(app.sample_interval_ms) {
+            app.sample_hardware();
+            if !app.paused {
+                app.update_market();
+            }
+            last_sample = Instant::now();
+        }
+
+        if last_draw.elapsed() >= Duration::from_millis(80) {
+            terminal.terminal.draw(|frame| ui::draw(frame, &app))?;
+            last_draw = Instant::now();
+        }
+
+        if event::poll(Duration::from_millis(30))? {
+            if let Event::Key(key) = event::read()? {
+                if key.kind == KeyEventKind::Press {
+                    match key.code {
+                        KeyCode::Char('q') | KeyCode::Esc => break,
+                        KeyCode::Char(' ') | KeyCode::Char('p') => app.paused = !app.paused,
+                        KeyCode::Char('r') => app.reset_market(),
+                        KeyCode::Char('+') | KeyCode::Char('=') => {
+                            app.sample_interval_ms =
+                                app.sample_interval_ms.saturating_sub(250).max(500);
+                        }
+                        KeyCode::Char('-') => {
+                            app.sample_interval_ms = (app.sample_interval_ms + 250).min(10_000);
+                        }
+                        KeyCode::Char('1') => app.sample_interval_ms = 1_000,
+                        KeyCode::Char('2') => app.sample_interval_ms = 2_500,
+                        KeyCode::Char('3') => app.sample_interval_ms = 5_000,
+                        _ => {}
+                    }
                 }
             }
         }
+    }
 
-        // Draw chart frame
-        draw_frame(current_price, prev_close)?;
-        
-        std::thread::sleep(std::time::Duration::from_millis(2500));
-    }
-}
-
-fn draw_frame(price: f64, prev_price: f64) -> Result<()> {
-    println!("{}", GREEN);
-    println!("╔══════════════════════════════════════════════════╗");
-    
-    if price > prev_price + 0.01 {
-        println!("║  Direction: 🟢 UP                                 ║");
-    } else if price < prev_price - 0.01 {
-        println!("║  Direction: 🔴 DOWN                               ║");
-    } else {
-        println!("║  Direction: → STABLE                              ║");
-    }
-    
-    println!("║                                                    ║");
-    println!("║  Latest Price: ${:.2}                              ║", price);
-    
-    // Simple candlestick bars at price level
-    for row in 0..=4 {
-        let threshold = price - (row as f64) * 5.0;
-        
-        if threshold <= price {
-            print!("║  {} ", threshold);
-            let bar_len = ((price - threshold + 1.0).ceil() as usize).min(20);
-            
-            for _ in 0..bar_len {
-                if row == 0 && price > prev_price {
-                    print!("{}", GREEN);
-                } else if row == 3 && price < prev_price {
-                    print!("{}", RED);
-                } else {
-                    print!("█");
-                }
-            }
-        }
-        
-        println!("{}", RESET);
-    }
-    
-    println!("║                                                    ║");
-    println!("║  Time intervals: 30m   35m   40m   45m           ║");
-    println!("╚══════════════════════════════════════════════════╝");
-    
     Ok(())
 }
-
-const GREEN: &str = "\x1b[32m";
-const RED: &str = "\x1b[31m";
-const YELLOW: &str = "\x1b[33m";
-const GRAY: &str = "\x1b[90m";
-const RESET: &str = "\x1b[0m";
