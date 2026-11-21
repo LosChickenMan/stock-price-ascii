@@ -1,22 +1,55 @@
-# Hardware Candlestick Chart Configuration
-# ========================================
-# Use flat key-value TOML structure (not nested tables)
+# Hardware Candlestick Terminal Configuration
+# =============================================
+# This file controls the behavior of the hardware performance visualization
 
-sample_rate = 0.5          # Seconds between metric readings
+[sample_rate]
+enabled = true          # Enable auto-updating sample rate control
+value = 0.5            # Seconds between readings (lower = more responsive)
 
-duration_enabled = false    # Enable duration limit for demo mode
-duration_seconds = 30       # Duration in seconds (only if enabled above)
+[duration]
+enabled = false        # Set to true for limited runtime test mode
+seconds = 30           # Duration in seconds (only if enabled=true)
 
-cpu_weight = 0.35          # CPU load weight (0.0-1.0)
-gpu_weight = 0.22          # GPU utilization weight  
-temp_weight = 0.18         # Temperature deviation weight
-traffic_weight = 0.17      # Network traffic weight
-time_weight = 0.12         # Hour-of-day factor weight
+[volatility.weights]
+cpu = 0.35            # CPU load contribution (highest weight - most volatile)
+gpu = 0.22            # GPU utilization contribution  
+temp = 0.18           # Temperature deviation from baseline (thermal lag effect)
+traffic = 0.17        # Network traffic burstiness
+time = 0.12           # Hour-of-day diurnal pattern
 
-gaussian_std = 0.08        # Gaussian noise standard deviation
-uniform_range = 0.06       # Uniform jitter range (± value)
-noise_weight = 0.12        # How much noise influences output
+[volatility.noise]
+gaussian_std = 0.08      # Standard deviation as fraction of signal range
+uniform_range = 0.06     # Uniform jitter range (± value)
+noise_weight = 0.12      # How much noise influences final score
 
-display_width = 80         # Terminal width in characters
-display_height = 24        # Terminal height in characters  
-show_timestamp = true      # Show wall clock timestamp on screen
+[display]
+width = 80             # Terminal width in characters
+height = 24            # Terminal height in characters
+show_timestamp = true  # Show wall clock timestamp on screen
+theme = "default"      # Options: default, green/red, monochrome
+
+[metrics]
+cpu_source = "/proc/loadavg"   # CPU load reading path
+mem_source = "/proc/meminfo"   # Memory reading path  
+temp_source = "/sys/class/thermal/thermal_zone0/temp"  # Temperature path
+gpu_enabled = false             # Set true if nvidia-smi is available
+network_sources = [             # Network device paths to monitor
+    "/dev/sda",
+    "eth0",
+]
+
+[performance]
+sample_buffer_size = 30        # Number of samples before discarding oldest
+render_batch_count = 1         # Render batches per frame (1 = real-time)
+
+[debug]
+verbose_logging = false          # Enable detailed debug output
+show_raw_metrics = false         # Show unprocessed metric values
+log_file = "candlestick.log"     # Optional log file path
+
+[market]
+initial_price = 50.0            # Starting price for market simulation
+min_price = 45.0                # Price floor (prevents going too low)
+max_price = 80.0                # Price ceiling (prevents going too high)
+candle_history_count = 20       # How many past candles to display
+update_interval_ms = 2500       # Update interval in milliseconds

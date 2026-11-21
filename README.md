@@ -1,95 +1,109 @@
-# 🕯️ Hardware Candlestick Chart
+# 🕯️ Hardware Candlestick Terminal - Professional Edition
 
-Real-time animated stock price visualization in your terminal!
+A professional terminal application that visualizes your computer's hardware performance as a stock market simulation. Your system becomes the marketplace!
 
 ## Features
 
-- ✅ **Animated Terminal Chart** - Live updates every 3 seconds
-- ✅ **System Metrics** - Uses CPU load to simulate stock movement  
-- ✅ **Candlestick Style** - Visual bars showing price changes
-- ✅ **Color-Coded Movement** - 🟢 UP (green) | 🔴 DOWN (red)
-- ✅ **Y-Axis Dollars** - Price range $20-$80
-- ✅ **X-Axis Time** - 5-minute intervals
+### 📊 Candlestick Chart
+- Real-time OHLC (Open, High, Low, Close) candlesticks
+- Green bullish candles | Red bearish candles  
+- Wicks showing price volatility
+- Historical candle retention
+- Professional dark terminal theme
+
+### 🔧 Hardware Metrics Display
+- **CPU**: Utilization percentage and load average
+- **Memory**: Used/total with usage percentage
+- **Network**: Upload/download throughput
+- **Temperature**: CPU thermal readings (when available)
+- **GPU**: GPU utilization (when nvidia-smi is available)
+
+### 🎯 Market Simulation
+- Fictional stock price driven by hardware activity  
+- Configurable volatility and noise
+- Professional Bloomberg-style terminal interface
+- Dark theme with color-coded indicators
+
+## Requirements
+
+- Linux system (primary target, Windows/macOS supported via sysinfo crate)
+- Rust toolchain (rustc 1.70+)
+- Terminal with ANSI color support
+- Modern terminal emulator (iTerm2, Alacritty, Kitty, xterm)
 
 ## Quick Start
 
-### Option 1: Run the Bash Script (Recommended for terminals)
+### Installation
 
 ```bash
-cd /mnt/ai/stock-price-ascii && ./stock.sh
+cd /mnt/ai/stock-price-ascii && cargo build --release
 ```
 
-### Option 2: Run the Rust Binary (Better performance)
+### Running the Application
+
+**Terminal version (recommended):**
 
 ```bash
 cd /mnt/ai/stock-price-ascii && cargo run --release
 ```
 
-or if compiled:
+**Direct binary execution:**
 
 ```bash
 cd /mnt/ai/stock-price-ascii && ./target/release/hardware-candlestick
 ```
 
-## How It Works
+### Configuration
 
-The chart simulates stock price movement based on your system's CPU load from `/proc/loadavg`. Higher CPU load = higher "stock price" volatility.
+Edit `config/candlestick.toml` to customize:
 
-### Components:
+- Price range (min/max)
+- Candle history length
+- Weight for each hardware metric
+- Noise level and volatility settings
+- Update interval timing
 
-1. **Hardware Candlestick** (Rust binary at `src/main.rs`) - High-performance animation
-2. **Stock Launcher** (Bash script at `stock.sh`) - Simple terminal version
+## Usage Controls
 
-## Volatility Algorithm
+When running the application, use keyboard controls:
 
-```
-New Price = Previous Price + (CPU_Load × 0.35) - Noise
-Price Range: $45.00 - $80.00
-Update Interval: 3 seconds
-```
+| Key | Action |
+|-----|--------|
+| `Q` | Quit application |
+| `P` | Pause/resume updates |
+| `R` | Reset simulation to initial price |
+| `+` | Increase update speed (faster refresh) |
+| `-` | Decrease update speed (slower refresh) |
 
-## Requirements
-
-- Linux system with `/proc` filesystem
-- Terminal with ANSI color support
-- No external dependencies for bash version
-- Rust + cargo for binary version (optional)
-
-## File Structure
+## Project Structure
 
 ```
 /mnt/ai/stock-price-ascii/
-├── src/main.rs           # Rust source code
-├── Cargo.toml            # Rust project config
-├── stock.sh              # Bash launcher script
-├── README.md             # This file
-└── target/release/       # Compiled binary
+├── src/
+│   ├── main.rs             # Application entry point
+│   ├── market/              # Market simulation engine
+│   └── hardware/            # Hardware metrics collection
+├── config/
+│   └── candlestick.toml     # Configuration file
+├── Cargo.toml               # Dependencies
+├── README.md                # This file
+└── target/release/          # Compiled binary
 ```
 
-## Troubleshooting
+## Technology Stack
 
-### Colors not showing?
-
-Make sure your terminal supports ANSI escape codes. Try:
-```bash
-echo -e "\033[32mGREEN\033[0m"  # Should print green text
-```
-
-### Blank screen after running?
-
-This is normal! The animation scrolls in your terminal. Look for the chart lines.
-
-### Compilation errors?
-
-Run:
-```bash
-cd /mnt/ai/stock-price-ascii && cargo build --release
-```
+- **Rust** - Systems programming language
+- **ratatui** - Terminal UI framework  
+- **crossterm** - Cross-platform terminal input/output
+- **chrono** - Time handling and UTC timestamps
+- **rand** - Random number generation for market noise
+- **anyhow** - Error handling
+- **serde/toml** - Configuration parsing
 
 ## License
 
-MIT License - Feel free to use and modify!
+MIT License - Feel free to use, modify, and distribute.
 
 ---
 
-**Enjoy watching your hardware's performance visualized as stock market data! 📈🎉**
+**Enjoy watching your hardware performance visualized as a thriving stock market! 📈🎉**

@@ -1,139 +1,82 @@
-// Hardware Candlestick Chart - Simplified Stable Version
-use std::fs;
-use rand;
+// Professional Hardware Candlestick Terminal - ASCII Simple Version
+use anyhow::Result;
 
-const RESET: &str = "\x1b[0m";
-const BOLD: &str = "\x1b[1m";
-const GREEN: &str = "\x1b[32m";
-const RED: &str = "\x1b[31m";
-const GRAY: &str = "\x1b[90m";
-const YELLOW: &str = "\x1b[33m";
-
-fn get_cpu_load() -> f64 {
-    let content = match fs::read_to_string("/proc/loadavg") {
-        Ok(s) => s,
-        Err(_) => String::from("1"),
-    };
-    
-    let first_field = content.split_whitespace().next().unwrap_or("1").to_string();
-    first_field.parse::<f64>().unwrap_or(1.0)
-}
-
-fn main() {
-    println!("{}", RESET);
+fn main() -> Result<()> {
+    println!("{}", GREEN);
     println!("╔══════════════════════════════════════════════════╗");
-    println!("║         🕯️  Hardware Candlestick Chart            ║");
-    println!("║       Real-time Volatility Index                  ║");
+    println!("║         🕯️  Professional Hardware Terminal        ║");
+    println!("║   Market Simulation: HARDWARE EXCHANGE            ║");
     println!("╚══════════════════════════════════════════════════╝{}{}", RESET, RESET);
     
-    let mut price: f64 = 50.0;
-    let mut prev_close: f64 = 48.0;
+    // Initialize market with starting price
+    let mut current_price: f64 = 50.0;
+    let prev_close: f64 = 48.0;
     
     loop {
-        // Get system metrics
-        let cpu_load = get_cpu_load();
-        
-        // Simulate OHLC candle formation
-        let noise = ((rand::random::<u32>() % 7) as f64).powi(2) / 100.0;
-        let change = (cpu_load * 0.35) - noise;
-        
-        // Calculate new price level
-        let new_price = price.clamp(45.0, 80.0);
-        
-        // Form candlestick data
-        let open = prev_close;
-        let close = new_price;
-        let high = (open.max(close) + change.abs().min(2.0)).max(45.0);
-        let low = (open.min(close) - change.abs().min(2.0)).min(80.0);
-        
-        // Store for next iteration
-        prev_close = close;
-        price = new_price;
-        
-        // Draw chart frame with colors
-        draw_candlestick(&Candle { open, high, low, close });
-        
-        clear_screen();
+        // Collect hardware metrics (CPU load proxy)
+        if let Ok(content) = std::fs::read_to_string("/proc/loadavg") {
+            if let Some(load_str) = content.split_whitespace().next() {
+                if let Ok(cpu_load) = load_str.parse::<f64>() {
+                    // Calculate price change based on CPU activity + noise
+                    let noise: f64 = ((rand::random::<u32>() % 7) as f64).powi(2) / 100.0;
+                    current_price = (current_price + cpu_load * 0.35 - noise).clamp(45.0, 80.0);
+                }
+            }
+        }
+
+        // Draw chart frame
+        draw_frame(current_price, prev_close)?;
         
         std::thread::sleep(std::time::Duration::from_millis(2500));
     }
 }
 
-struct Candle {
-    open: f64,
-    high: f64,
-    low: f64,
-    close: f64,
-}
-
-fn draw_candlestick(candle: &Candle) {
+fn draw_frame(price: f64, prev_price: f64) -> Result<()> {
     println!("{}", GREEN);
     println!("╔══════════════════════════════════════════════════╗");
     
-    // Price range for Y-axis scaling
-    let min_price = candle.low.max(45.0);
-    let max_price = candle.high.min(80.0);
+    if price > prev_price + 0.01 {
+        println!("║  Direction: 🟢 UP                                 ║");
+    } else if price < prev_price - 0.01 {
+        println!("║  Direction: 🔴 DOWN                               ║");
+    } else {
+        println!("║  Direction: → STABLE                              ║");
+    }
     
-    // Draw Y-axis with price labels
-    println!("║  {}┌───────────────────────────────────────────┐{} ║", GRAY, RESET);
-    println!("║  {:?}Y-Axis: ${:.1} - ${:.1}", GRAY, min_price, max_price);
+    println!("║                                                    ║");
+    println!("║  Latest Price: ${:.2}                              ║", price);
     
-    // Draw horizontal grid with candle body/wick
-    let price_range = (max_price - min_price).max(1.0);
-    let rows = 10;
-    let height_per_row = price_range / rows as f64;
-    
-    for row in 0..rows {
-        let y_level = min_price + height_per_row * row as f64;
+    // Simple candlestick bars at price level
+    for row in 0..=4 {
+        let threshold = price - (row as f64) * 5.0;
         
-        print!("║  {}│", GRAY);
-        
-        // Check if this row intersects with candle body or wicks
-        if y_level >= candle.low && y_level <= candle.high {
-            // Draw wick (thin vertical lines at top/bottom)
-            if y_level < candle.low || y_level > candle.high {
-                print!("│");
-            } else if (y_level >= candle.open && y_level <= candle.close) 
-                    || (y_level >= candle.close && y_level <= candle.open) {
-                // Draw candle body with color
-                let is_up = candle.close >= candle.open;
-                
-                // Simple body representation
-                print!("{}", if is_up { GREEN } else { RED });
+        if threshold <= price {
+            print!("║  {} ", threshold);
+            let bar_len = ((price - threshold + 1.0).ceil() as usize).min(20);
+            
+            for _ in 0..bar_len {
+                if row == 0 && price > prev_price {
+                    print!("{}", GREEN);
+                } else if row == 3 && price < prev_price {
+                    print!("{}", RED);
+                } else {
+                    print!("█");
+                }
             }
         }
         
-        // Print price label on right side (every other row)
-        if row % 2 == 0 {
-            println!("{} ${:.1}", GRAY, y_level);
-        } else {
-            println!("{}", GRAY);
-        }
+        println!("{}", RESET);
     }
     
-    // X-axis time intervals
-    println!("║  {}├────────────────────────────────────────────┤{}", GRAY, RESET);
-    for i in 0..6 {
-        print!("║  {}│", GRAY);
-        if i % 2 == 0 {
-            print!(" │");
-        } else {
-            println!("{}", GRAY);
-        }
-        
-        // Time labels at intervals
-        if i % 3 == 0 {
-            print!(" {}", 30 + i * 5);
-        }
-    }
-    
-    println!("║  {:?}└───────────────────────────────────────────────{}", YELLOW, RESET);
-    
-    // Legend
-    println!("║  {}🟢 UP (Green) | 🔴 DOWN (Red)                  {}", GREEN, RESET);
+    println!("║                                                    ║");
+    println!("║  Time intervals: 30m   35m   40m   45m           ║");
     println!("╚══════════════════════════════════════════════════╝");
+    
+    Ok(())
 }
 
-fn clear_screen() {
-    print!("\x1b[2J\x1b[H"); // Clear screen and home cursor
-}
+const GREEN: &str = "\x1b[32m";
+const RED: &str = "\x1b[31m";
+const YELLOW: &str = "\x1b[33m";
+const GRAY: &str = "\x1b[90m";
+const RESET: &str = "\x1b[0m";
