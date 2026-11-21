@@ -1,138 +1,108 @@
-# 🕯️ Hardware Candlestick Chart - Rust Terminal Visualization
+# 🕯️ Candlestick Terminal Visualization - Rust Project
 
-Real-time terminal-based ASCII art animation that visualizes system hardware metrics as financial candlestick charts. Uses Rust's `ratatui` and `crossterm` for terminal UI rendering with a volatility algorithm combining CPU/GPU/Temp/Traffic metrics into a single directional signal.
+Real-time terminal-based ASCII art visualization that displays fluctuating metrics as financial-style candlestick charts. Uses Rust's `crossterm` for terminal control with a volatility algorithm combining multiple system metrics into directional signals.
 
 ## 🎯 Features
 
-- **Real-time monitoring**: Updates every configurable interval (default 0.5s)
-- **Volatility-driven**: Combines multiple hardware metrics + noise injection for organic fluctuations  
-- **Candlestick visualization**: Green/red bars showing "up" or "down" movement
-- **Cross-platform**: Works on Linux, macOS, Windows terminals
-- **Rust performance**: Zero-copy design, efficient CPU usage
-- **Configurable**: TOML-based configuration file
+- **Real-time updates**: Configurable refresh intervals
+- **Multi-metric analysis**: Combines CPU, GPU, temperature, traffic, and time factors
+- **Candlestick charts**: Green/red display for upward/downward movements
+- **Cross-platform**: Works on Linux, macOS, Windows terminals with ANSI support
+- **Efficient Rust code**: Zero external dependencies (stdlib only)
+- **Configurable**: TOML-based settings file
 
 ## 📦 Dependencies
 
-```toml
-crossterm = "0.28"    # Terminal abstraction layer
-ratatui = "0.29"      # Modern TUI framework
-rand = "0.8"          # Random number generation
-serde = { version = "1.0", features = ["derive"] }  # Config serialization
-toml = "0.8"          # TOML file parsing
-tracing = "0.1"       # Structured logging
-```
+No external crates required. Uses Rust standard library only:
+
+
 
 ## 🚀 Quick Start
 
-### 1. Setup Rust Development Environment
+### Prerequisites
 
-Rust is already installed on your system (`rustc` and `cargo` found in `/usr/bin/`).
+- **Rust toolchain**: Install from https://rustup.rs if needed
+- **Modern terminal**: With ANSI escape code support (xterm, GNOME Terminal, iTerm2, etc.)
+- **Linux/macOS/Windows with POSIX shell**
 
-### 2. Build the Project
+### Build and Run
 
 ```bash
-cd /home/ismail/.openclaw/workspace/coordinator
+# Navigate to project directory
+cd /path/to/stock-price-ascii
+
+# Check if Rust is installed
+rustc --version
+cargo --version
+
+# Build optimized release binary
 cargo build --release
+
+# Run the application
+./target/release/hardware-candlestick
 ```
 
-### 3. Run the Application
+### Test Briefly
 
 ```bash
-./target/release/candlestick
-# Or with configuration:
-./candlestick --config config/candlestick.toml
-```
-
-### 4. Test briefly
-
-```bash
-./candlestick --duration 10  # Run for 10 seconds as demo
+# Run for 30 seconds as demo (if duration flag is implemented)
+# cargo run --release
+# Or just let it run in background for continuous monitoring
 ```
 
 ## 📁 Project Structure
 
 ```
-hardware-candlestick/
+stock-price-ascii/
 ├── Cargo.toml          # Rust package manifest and dependencies
 ├── README.md           # This documentation file
 ├── .gitignore          # Git ignore rules for build artifacts
-├── config/             # TOML configuration files
+├── config/             # TOML configuration files (optional)
 │   └── candlestick.toml  # Main application configuration
 ├── src/                # Rust source code
-│   ├── main.rs        # Application entry point
-│   └── lib.rs         # Shared library modules (if split later)
-├── assets/             # Static resources, fonts if needed
-└── target/             # Build output (ignored in git)
+│   └── main.rs        # Application entry point
+└── target/             # Build output (ignored in git, see .gitignore)
 ```
 
-## ⚙️ Configuration Options
+## ⚙️ Configuration (Optional)
 
-Edit `config/candlestick.toml` to customize:
+Advanced configuration via TOML file:
 
-### Volatility Algorithm Weights
-- Adjust how much each metric influences the signal:
-  - `cpu`: CPU load percentage (highest weight)
-  - `gpu`: GPU utilization
-  - `temp`: Temperature deviation from baseline
-  - `traffic`: Network throughput
-  - `time`: Hour-of-day factor
+```toml
+# config/candlestick.toml example structure
+[algorithm]
+cpu_weight = 0.35
+gpu_weight = 0.22
+temp_weight = 0.18
+traffic_weight = 0.17
+time_weight = 0.12
 
-### Noise Parameters  
-- Control volatility intensity:
-  - `gaussian_std`: Standard deviation as fraction (0.08 = 8%)
-  - `uniform_range`: Uniform jitter range (±0.06)
-  - `noise_weight`: How much noise affects output (0.12)
+[noise]
+ gaussian_std = 0.08
+ uniform_range = "-0.06,+0.06"
+ weight = 0.12
 
-### Timing Settings
-- `sample_rate`: Update frequency in seconds (0.5s recommended)
-- `duration`: Max runtime for testing (set to 0 or disabled for continuous mode)
+[timing]
+sample_rate = 0.5  # seconds between updates
+duration = null     # null for continuous, or set for demo run
+```
 
-## 🛠️ Development Workflow
+## 🔨 Building the Project
 
-### Build & Run Locally
+### Compile with cargo
 
 ```bash
-# Development build (with debug output)
-cargo run
+cd /path/to/stock-price-ascii
+cargo build --release  # Optimized binary
+cargo run              # Debug builds
 
-# Production build (optimized, smaller binary)
-cargo build --release
-
-# Check for compilation warnings
-cargo clippy  # Optional: code quality checker
+# Check for warnings
+cargo clippy           # Optional: code quality
 ```
 
-### Git Version Control
+## 🔬 How the Volatility Algorithm Works
 
-The project is already in your workspace directory. To initialize and push to GitHub:
-
-```bash
-cd /home/ismail/.openclaw/workspace/coordinator
-git init
-git add .
-git commit -m "Initial hardware candlestick chart"
-
-# Add remote repository (replace with your actual repo URL)
-git remote add origin git@github.com:your-username/hardware-candlestick.git
-git push -u origin main
-```
-
-## 🔬 Volatility Algorithm
-
-The Rust implementation uses this formula:
-
-```rust
-V(t) = w_cpu * N(cpu, t) + 
-       w_gpu * N(gpu, t) + 
-       w_temp * N(temp, t) + 
-       w_traffic * N(traffic, t) + 
-       w_time * N(time, t) + 
-       NOISE_COMPONENT
-```
-
-Where `NOISE_COMPONENT = gaussian_noise + uniform_jitter`.
-
-See `src/main.rs` for implementation details and the volatility calculation function.
+## 🧪 Running and Testing
 
 ## 🧪 Testing Tips
 
@@ -141,29 +111,24 @@ See `src/main.rs` for implementation details and the volatility calculation func
 - Experiment with weight values to find your preferred "volatility feel"
 - Use `--duration 60` for demo purposes before continuous monitoring
 
-## 🐛 Debugging
+### Terminal Display
 
-Enable verbose logging in `config/candlestick.toml`:
+Colors appear automatically if your terminal supports ANSI escape codes (most do). If not:
+- Set `TERM=xterm-256color` in your shell
+- Or configure your terminal emulator's profile
 
-```toml
-[debug]
-verbose_logging = true
-show_raw_metrics = true
+### Troubleshooting Colors
+
+If green/red doesn't appear in your terminal:
+
+```bash
+# Check terminal color support
+term -xterm-256color  # Linux
 ```
 
-This will output metric values and intermediate calculations to the terminal.
+Or set TERM explicitly:
 
-## 📚 Resources
-
-- [Rust Book](https://doc.rust-lang.org/book/)
-- [crossterm documentation](https://docs.rs/crossterm)
-- [ratatui GitHub](https://github.com/ratatui/ratatui)
-- [Candlestick charts: Wikipedia](https://en.wikipedia.org/wiki/Candlestick_chart)
-
-## 📄 License
-
-MIT License - See LICENSE file for details.
-
-## 👤 Author
-
-Ismail - hardware-candlestick project contributor
+```bash
+export TERM=xterm-256color
+./target/release/hardware-candlestick
+```
