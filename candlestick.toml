@@ -1,0 +1,53 @@
+# Hardware Candlestick Chart Configuration
+# ========================================
+# 
+# This configuration file controls:
+# - Volatility algorithm weights (how each hardware metric contributes)
+# - Noise parameters (to add realistic market-like volatility)
+# - Display settings (terminal size, colors)
+# - Optional timing constraints (run duration)
+
+[sample_rate]
+enabled = true        # Enable auto-updating sample rate control
+value = 0.5          # Seconds between readings (lower = more responsive)
+
+[duration]
+enabled = false      # Set to true for limited runtime test mode
+seconds = 30         # Duration in seconds (only if enabled=true)
+
+[volatility.weights]
+cpu = 0.35           # CPU load contribution (highest weight - most volatile)
+gpu = 0.22           # GPU utilization contribution  
+temp = 0.18          # Temperature deviation from baseline (thermal lag effect)
+traffic = 0.17       # Network traffic burstiness
+time = 0.12          # Hour-of-day diurnal pattern
+
+[volatility.noise]
+gaussian_std = 0.08     # Standard deviation as fraction of signal range
+uniform_range = 0.06    # Uniform jitter range (± value)
+noise_weight = 0.12     # How much noise influences final score
+
+[display]
+width = 80              # Terminal width in characters
+height = 24            # Terminal height in characters
+show_timestamp = true  # Show wall clock timestamp on screen
+theme = "default"      # Options: default, green/red, monochrome
+
+[metrics]
+cpu_source = "/proc/loadavg"    # CPU load reading path
+mem_source = "/proc/meminfo"    # Memory reading path  
+temp_source = "/sys/class/thermal/thermal_zone0/temp"  # Temperature path
+gpu_enabled = false             # Set true if nvidia-smi is available
+network_sources = [             # Network device paths to monitor
+    "/dev/sda",
+    "eth0",
+]
+
+[performance]
+sample_buffer_size = 30        # Number of samples before discarding oldest
+render_batch_count = 1         # Render batches per frame (1 = real-time)
+
+[debug]
+verbose_logging = false          # Enable detailed debug output
+show_raw_metrics = false         # Show unprocessed metric values
+log_file = "candlestick.log"     # Optional log file path

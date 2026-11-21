@@ -1,0 +1,35 @@
+# Rust build artifacts
+/target/debug/candlestick
+/target/release/candlestick
+*.rlib
+*.rmeta
+
+# Dependencies - cargo does not install to /usr/local by default
+/target/debug/build/
+/target/release/build/
+cargo-vendor/
+
+# IDE configuration (optional)
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+.env.*
+
+# Temporary files
+tmp/
+temp/
+
+# Build output directories
+target/
